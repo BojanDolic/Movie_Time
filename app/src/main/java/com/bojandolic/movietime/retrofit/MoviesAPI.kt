@@ -11,11 +11,14 @@ import retrofit2.http.Query
 
 interface MoviesAPI {
 
-    @GET("movie/top_rated")
-    suspend fun getTopRatedMovies(@Query("api_key") key: String): Response<MovieResponse>
+    @GET("{category}/top_rated")
+    suspend fun getTopRatedMoviesShows(
+        @Path("category") category: String,
+        @Query("api_key") key: String): Response<MovieResponse>
 
-    @GET("search/movie")
+    @GET("search/{category}")
     suspend fun searchMovies(
+        @Path("category") category: String,
         @Query("api_key") key: String,
         @Query("query") search: String
     ): Response<MovieResponse>

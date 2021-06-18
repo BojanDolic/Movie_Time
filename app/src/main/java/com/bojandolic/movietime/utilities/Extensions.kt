@@ -37,7 +37,7 @@ fun SearchView.onTextChangeWaitListener() = callbackFlow {
 
     setOnCloseListener {
         trySend("")
-        true
+        false
     }
 
     awaitClose { setOnQueryTextListener(null) }

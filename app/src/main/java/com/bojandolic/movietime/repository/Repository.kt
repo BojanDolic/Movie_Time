@@ -18,12 +18,14 @@ class Repository @Inject constructor(
 ) : RepositorySource() {
 
     /**
-     * Gets top rated movies
+     * Gets top rated movies or shows based on category
+     *
+     * @param category string which represents if API result will be movies or tv shows
      *
      * @see getRemoteResult
      */
-    suspend fun getTopRatedMovies() = getRemoteData {
-        getRemoteResult { moviesApi.getTopRatedMovies(BuildConfig.API_KEY) }
+    fun getTopRatedMoviesShows(category: String) = getRemoteData {
+        getRemoteResult { moviesApi.getTopRatedMoviesShows(category, BuildConfig.API_KEY) }
     }
 
 
@@ -32,9 +34,9 @@ class Repository @Inject constructor(
      *
      * @param query movie name
      */
-    suspend fun searchMovies(query: String) = getRemoteData {
+    fun searchMovies(category: String, query: String) = getRemoteData {
         getRemoteResult {
-            moviesApi.searchMovies(BuildConfig.API_KEY, query)
+            moviesApi.searchMovies(category, BuildConfig.API_KEY, query)
         }
     }
 

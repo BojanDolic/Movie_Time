@@ -7,7 +7,7 @@
     tools:context=".ui.fragments.MainFragment"
     android:orientation="vertical">
 
-    <androidx.appcompat.widget.Toolbar
+    <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -30,6 +30,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Movies"
+            android:tag="movie"
             style="@style/Widget.MaterialComponents.Button.TextButton"/>
 
         <com.google.android.material.button.MaterialButton
@@ -37,6 +38,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Shows"
+            android:tag="tv"
             style="@style/Widget.MaterialComponents.Button.TextButton"/>
 
     </com.google.android.material.button.MaterialButtonToggleGroup>

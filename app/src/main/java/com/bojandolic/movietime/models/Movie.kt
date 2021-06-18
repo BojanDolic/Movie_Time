@@ -6,7 +6,7 @@ data class Movie(
     @SerializedName("id")
     val movieId: Long,
 
-    @SerializedName("title")
+    @SerializedName("title", alternate = ["name"])
     val title: String,
 
     @SerializedName("overview")
