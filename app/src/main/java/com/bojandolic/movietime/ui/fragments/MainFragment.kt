@@ -3,8 +3,11 @@ package com.bojandolic.movietime.ui.fragments
 import android.os.Bundle
 import android.util.Log
 import android.view.*
+import android.widget.Button
+import androidx.appcompat.widget.SearchView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.ui.NavigationUI
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -13,7 +16,13 @@ import com.bojandolic.movietime.databinding.FragmentMainBinding
 import com.bojandolic.movietime.ui.adapters.MoviesRecyclerAdapter
 import com.bojandolic.movietime.ui.viewmodels.MainFragmentViewModel
 import com.bojandolic.movietime.utilities.Resource
+import com.bojandolic.movietime.utilities.onTextChangeWaitListener
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
+
+private const val TAG = "MainFragment"
 
 @AndroidEntryPoint
 class MainFragment : Fragment() {
@@ -22,6 +31,8 @@ class MainFragment : Fragment() {
     private val binding get() = _binding!!
 
     private val viewmodel: MainFragmentViewModel by viewModels()
+
+    val seconds = 1000
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -49,28 +60,32 @@ class MainFragment : Fragment() {
 
         if(viewmodel.movies.value == null)
             viewmodel.getTopRatedMovies()
-        viewmodel.movies.observe(viewLifecycleOwner) { movieResponse ->
+        viewmodel.allMovies.observe(viewLifecycleOwner) { resource ->
 
-            Log.d("TAG", "onViewCreated: PROMJENA DOGAĐAJ")
+            Log.d(TAG, "onViewCreated: PROMJENA DOGAĐAJ")
 
-            when(movieResponse.status) {
-                Resource.Status.SUCCESS -> {
-                    val movies = movieResponse.data?.movies
-                    val adapter = MoviesRecyclerAdapter()
-                    adapter.asyncDiff.submitList(movies?.take(10))
+            resource?.let {
+                when(it.status) {
+                    Resource.Status.SUCCESS -> {
+                        val movies = resource.data?.movies
+                        val adapter = MoviesRecyclerAdapter()
+                        //adapter.asyncDiff.submitList(movies?.take(10))
 
-                    Log.d("TAG", "onViewCreated: ${adapter.asyncDiff.currentList.size}")
+                        adapter.submitList(movies?.take(10))
 
-                    binding.moviesRecycler.apply {
-                        setAdapter(adapter)
-                        layoutManager = LinearLayoutManager(requireContext())
+                        //Log.d(TAG, "onViewCreated: ${adapter.asyncDiff.currentList.size}")
+
+                        binding.moviesRecycler.apply {
+                            setAdapter(adapter)
+                            layoutManager = LinearLayoutManager(requireContext())
+                        }
                     }
-                }
-                Resource.Status.ERROR -> {
-                    Log.e("TAG", "onViewCreated: ${movieResponse.message}")
-                }
-                Resource.Status.LOADING -> {
-                    Log.e("TAG", "DATA IS LOADING")
+                    Resource.Status.ERROR -> {
+                        Log.e(TAG, "onViewCreated: ${resource.message}")
+                    }
+                    Resource.Status.LOADING -> {
+                        Log.e(TAG, "DATA IS LOADING")
+                    }
                 }
             }
 
@@ -78,6 +93,20 @@ class MainFragment : Fragment() {
 
     }
 
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        if(item.itemId == R.id.movie_search) {
+            val searchView = item.actionView as SearchView
+
+            searchView.onTextChangeWaitListener()
+                .debounce(1000)
+                .onEach { searchQuery ->
+                    viewmodel.searchForMoviesShows(searchQuery)
+                }
+                .launchIn(lifecycleScope)
+
+        }
+        return true
+    }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
         inflater.inflate(R.menu.toolbar_search_menu, menu)

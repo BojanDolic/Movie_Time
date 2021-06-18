@@ -1,5 +1,6 @@
 package com.bojandolic.movietime.utilities
 
+import android.util.Log
 import retrofit2.Response
 import java.lang.Exception
 
@@ -11,8 +12,8 @@ abstract class RepositorySource {
             val response = call()
             if(response.isSuccessful) {
                 val body = response.body()
-
-                if(body != null) return Resource.success(body)
+                //Log.d("TAG", "getRemoteResult: ${response.raw().request().url().uri().toASCIIString()}")
+                if(body != null) return Resource.success(body) else return Resource.error("Body of the network request is null")
 
             }
             return Resource.error("${response.code()} ${response.message()}")

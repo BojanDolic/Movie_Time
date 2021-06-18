@@ -32,26 +32,22 @@ class Repository @Inject constructor(
      *
      * @param query movie name
      */
-    suspend fun searchMovies(query: String) {
-        getRemoteResult { moviesApi.searchMovies(
-            BuildConfig.API_KEY,
-            query
-        ) }
+    suspend fun searchMovies(query: String) = getRemoteData {
+        getRemoteResult {
+            moviesApi.searchMovies(BuildConfig.API_KEY, query)
+        }
     }
 
 
-
-
-
-    fun <T> getRemoteData(
+    private fun <T> getRemoteData(
         networkCall: suspend () -> Resource<T>
     ): LiveData<Resource<T>> = liveData(Dispatchers.IO) {
         emit(Resource.loading())
 
         val response = networkCall.invoke()
-        if(response.status == Resource.Status.SUCCESS)
+        if (response.status == Resource.Status.SUCCESS)
             emit(response)
-        else if(response.status == Resource.Status.ERROR) {
+        else if (response.status == Resource.Status.ERROR) {
             emit(Resource.error(response.message!!))
         }
     }
