@@ -21,21 +21,14 @@ public class MainFragmentViewModel @Inject constructor(
 
     private val combinedQuery = MediatorLiveData<Pair<String?, String?>>().apply {
         addSource(category) {
-            Log.d("TAG", "VIEWMODEL | KATEGORIJA PASSED: ${it}")
-            Log.d("TAG", "VIEWMODEL | KATEGORIJA VALUE: ${category.value}")
             value = Pair(it, searchQuery2.value)
         }
 
         addSource(searchQuery2) {
-            Log.d("TAG", "VIEWMODEL | SEARCH PASSED: ${it}")
-            Log.d("TAG", "VIEWMODEL | SEARCH VALUE: ${searchQuery2.value}")
             value = Pair(category.value, it)
         }
     }
 
-    init {
-        Log.d("TAG", "VIEWMODEL | SEARCH VALUE ON INIT: ${searchQuery2.value}")
-    }
 
     var allMovies: LiveData<Resource<MovieResponse>> =
         Transformations.switchMap(combinedQuery) { pair ->
@@ -56,11 +49,13 @@ public class MainFragmentViewModel @Inject constructor(
     private fun fetchMoviesAndShows(category: String, searchQuery: String): LiveData<Resource<MovieResponse>> {
         return if(searchQuery.length <= 2)
             getTopRatedMoviesShows(category)
-        else searchMovieShows(searchQuery)
+        else searchMovieShows(category, searchQuery)
     }
 
     private fun getTopRatedMoviesShows(category: String) = movieRepository.getTopRatedMoviesShows(category)
 
-    private fun searchMovieShows(query: String) = movieRepository.searchMovies(category.value ?: "movie", query)
+    private fun searchMovieShows(category: String, query: String): LiveData<Resource<MovieResponse>> {
+        return movieRepository.searchMovies(category, query)
+    }
 
 }
