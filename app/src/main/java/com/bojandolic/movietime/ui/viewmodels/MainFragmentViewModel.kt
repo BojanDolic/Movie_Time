@@ -12,7 +12,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 public class MainFragmentViewModel @Inject constructor(
-    val movieRepository: Repository
+    private val movieRepository: Repository,
+    private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
     val category: MutableLiveData<String> = MutableLiveData("movie")
@@ -20,19 +21,27 @@ public class MainFragmentViewModel @Inject constructor(
 
     private val combinedQuery = MediatorLiveData<Pair<String?, String?>>().apply {
         addSource(category) {
+            Log.d("TAG", "VIEWMODEL | KATEGORIJA PASSED: ${it}")
+            Log.d("TAG", "VIEWMODEL | KATEGORIJA VALUE: ${category.value}")
             value = Pair(it, searchQuery2.value)
         }
 
         addSource(searchQuery2) {
+            Log.d("TAG", "VIEWMODEL | SEARCH PASSED: ${it}")
+            Log.d("TAG", "VIEWMODEL | SEARCH VALUE: ${searchQuery2.value}")
             value = Pair(category.value, it)
         }
+    }
+
+    init {
+        Log.d("TAG", "VIEWMODEL | SEARCH VALUE ON INIT: ${searchQuery2.value}")
     }
 
     var allMovies: LiveData<Resource<MovieResponse>> =
         Transformations.switchMap(combinedQuery) { pair ->
 
             val category = pair.first
-            var searchQuery = pair.second
+            val searchQuery = pair.second
 
             if (category != null && searchQuery != null) {
                 fetchMoviesAndShows(category, searchQuery)
@@ -40,57 +49,18 @@ public class MainFragmentViewModel @Inject constructor(
 
         }
 
-    //MutableLiveData()
     val movies get() = allMovies
-
-    var data: LiveData<Resource<MovieResponse>> = MutableLiveData()
-    lateinit var observer: Observer<Resource<MovieResponse>>
-
     var isSearching = false
-    private var searchQuery = ""
-    val searchText get() = searchQuery
 
 
-
-    /*init {
-        observer = Observer<Resource<MovieResponse>> {
-            allMovies.value = it
-            Log.d(
-                "TAG",
-                "getTopRatedMovies: POZVANA FUNKCIJA UPDATE\n\n ${data.value?.data?.movies?.get(0)}"
-            )
-        }
-    }*/
-
-    fun fetchMoviesAndShows(category: String, searchQuery: String): LiveData<Resource<MovieResponse>> {
+    private fun fetchMoviesAndShows(category: String, searchQuery: String): LiveData<Resource<MovieResponse>> {
         return if(searchQuery.length <= 2)
             getTopRatedMoviesShows(category)
         else searchMovieShows(searchQuery)
     }
 
-    fun getTopRatedMoviesShows(category: String) = movieRepository.getTopRatedMoviesShows(category)
-        //viewModelScope.launch {
-            /*val data = movieRepository.getTopRatedMoviesShows()
-            data.observeForever(observer)
-            Log.d("TAG", "getTopRatedMovies: POZVANA FUNKCIJA ZA FILMOVE")*/
-        //}
-    //}
+    private fun getTopRatedMoviesShows(category: String) = movieRepository.getTopRatedMoviesShows(category)
 
     private fun searchMovieShows(query: String) = movieRepository.searchMovies(category.value ?: "movie", query)
-
-    /*fun searchForMoviesShows(query: String) {
-        searchQuery = query
-        if (query.length >= 3) {
-            searchMovieShows(query)
-        } else if (query.length <= 2) {
-            getTopRatedMoviesShows()
-        }
-    }*/
-
-
-    override fun onCleared() {
-        data.removeObserver(observer)
-        super.onCleared()
-    }
 
 }

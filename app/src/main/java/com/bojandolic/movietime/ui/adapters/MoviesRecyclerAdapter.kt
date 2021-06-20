@@ -4,6 +4,7 @@ import android.os.CountDownTimer
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.core.view.isVisible
 import androidx.recyclerview.widget.*
 import com.bojandolic.movietime.databinding.FragmentMainBinding
 import com.bojandolic.movietime.databinding.MovieItemBinding
@@ -17,7 +18,13 @@ import java.util.*
 import java.util.logging.Handler
 import kotlin.concurrent.timerTask
 
-class MoviesRecyclerAdapter : ListAdapter<Movie, MoviesRecyclerAdapter.MovieViewHolder>(DiffCallback()) {
+class MoviesRecyclerAdapter constructor(
+    val listener: OnMovieListClick
+) : ListAdapter<Movie, MoviesRecyclerAdapter.MovieViewHolder>(DiffCallback()) {
+
+    interface OnMovieListClick {
+        fun onMovieClicked(movie: Movie)
+    }
 
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MovieViewHolder {
@@ -36,9 +43,7 @@ class MoviesRecyclerAdapter : ListAdapter<Movie, MoviesRecyclerAdapter.MovieView
 
     }
 
-    //override fun getItemCount(): Int = item
-
-    class MovieViewHolder(val binding: MovieItemBinding)
+    inner class MovieViewHolder(val binding: MovieItemBinding)
         : RecyclerView.ViewHolder(binding.root) {
 
            fun bindViews(movie: Movie) {
@@ -46,9 +51,16 @@ class MoviesRecyclerAdapter : ListAdapter<Movie, MoviesRecyclerAdapter.MovieView
                binding.movieTitle.text = movie.title
                binding.movieDesc.text = movie.description
 
-               binding.movieImage.loadMovieUrl(movie.poster)
+               binding.adultContent.isVisible = movie.adult
+
+               binding.movieImage.loadMovieUrl(movie.poster, Movie.IMAGE_W500)
+
+               binding.root.setOnClickListener {
+                   listener.onMovieClicked(movie)
+               }
 
            }
+
 
     }
 

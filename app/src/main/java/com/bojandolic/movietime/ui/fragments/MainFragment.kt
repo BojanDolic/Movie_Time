@@ -1,6 +1,7 @@
 package com.bojandolic.movietime.ui.fragments
 
 import android.os.Bundle
+import android.text.TextUtils
 import android.util.Log
 import android.view.*
 import android.widget.Button
@@ -14,6 +15,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.ui.NavigationUI
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.bojandolic.movietime.R
 import com.bojandolic.movietime.databinding.FragmentMainBinding
 import com.bojandolic.movietime.models.Movie
@@ -24,23 +26,22 @@ import com.bojandolic.movietime.utilities.onTextChangeWaitListener
 import com.google.android.material.button.MaterialButton
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.*
 
 private const val TAG = "MainFragment"
 
 @AndroidEntryPoint
-class MainFragment : Fragment() {
+class MainFragment : Fragment(), MoviesRecyclerAdapter.OnMovieListClick {
 
     private var _binding: FragmentMainBinding? = null
     private val binding get() = _binding!!
 
     private val viewmodel: MainFragmentViewModel by viewModels()
 
-    val seconds = 1000
+    private lateinit var searchView: SearchView
+    private lateinit var searchItem: MenuItem
 
-    var searching = false
+    val seconds = 1000
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -63,20 +64,24 @@ class MainFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setHasOptionsMenu(true)
+
         NavigationUI.setupWithNavController(binding.toolbar, findNavController())
 
         (activity as AppCompatActivity).setSupportActionBar(binding.toolbar)
 
         binding.buttonToggles.addOnButtonCheckedListener { group, checkedId, isChecked ->
-
             viewmodel.category.value = group.findViewById<MaterialButton>(group.checkedButtonId).tag.toString()
-            Log.d(TAG, "onViewCreated: ${viewmodel.category.value}")
-            //category.switc
         }
 
-        val adapter = MoviesRecyclerAdapter()
+        val adapter = MoviesRecyclerAdapter(this).apply {
+            stateRestorationPolicy = RecyclerView.Adapter.StateRestorationPolicy.PREVENT_WHEN_EMPTY
+        }
 
-        viewmodel.allMovies.observe(viewLifecycleOwner) { resource ->
+
+        /**
+         * Observing changes to movies livedata and updating UI accordingly
+         */
+        viewmodel.movies.observe(viewLifecycleOwner) { resource ->
 
             Log.d(TAG, "onViewCreated: PROMJENA DOGAĐAJ")
 
@@ -85,13 +90,13 @@ class MainFragment : Fragment() {
                     Resource.Status.SUCCESS -> {
                         val movies = resource.data?.movies ?: emptyList()
 
-                        adapter.submitList(movies?.take(10))
-
+                        adapter.submitList(movies.take(10))
 
                         binding.moviesRecycler.apply {
                             setAdapter(adapter)
                             layoutManager = LinearLayoutManager(requireContext())
                         }
+
                     }
                     Resource.Status.ERROR -> {
                         Log.e(TAG, "onViewCreated: ${resource.message}")
@@ -100,10 +105,18 @@ class MainFragment : Fragment() {
                         Log.e(TAG, "DATA IS LOADING")
                     }
                 }
+            } ?: {
+
             }
 
         }
 
+    }
+
+    override fun onMovieClicked(movie: Movie) {
+        findNavController().navigate(
+            MainFragmentDirections.actionMainFragmentToDetailsFragment(movie)
+        )
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -114,26 +127,9 @@ class MainFragment : Fragment() {
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
         inflater.inflate(R.menu.toolbar_search_menu, menu)
 
-        Log.d(TAG, "onOptionsItemSelected: POZVAN ONCREATEOPTIONSMENU")
+        searchItem = menu.findItem(R.id.movie_search)
 
-        val searchItem = menu.findItem(R.id.movie_search)
-
-        searchItem.setOnActionExpandListener(object : MenuItem.OnActionExpandListener {
-            override fun onMenuItemActionExpand(item: MenuItem?): Boolean {
-                viewmodel.isSearching = true
-                return true
-            }
-
-            override fun onMenuItemActionCollapse(item: MenuItem?): Boolean {
-                viewmodel.isSearching = false
-                viewmodel.searchQuery2.value = ""
-                binding.moviesRecycler.scrollToPosition(0)
-                return true
-            }
-        })
-
-
-        val searchView = searchItem.actionView as SearchView
+        searchView = searchItem.actionView as SearchView
 
         if (viewmodel.isSearching) {
             searchItem.expandActionView()
@@ -144,9 +140,28 @@ class MainFragment : Fragment() {
         searchView.onTextChangeWaitListener()
             .debounce(1000)
             .onEach { searchQuery ->
-                viewmodel.searchQuery2.value = searchQuery
+                if(isVisible)
+                    viewmodel.searchQuery2.value = searchQuery
+            }.launchIn(lifecycleScope)
+
+
+        searchItem.setOnActionExpandListener(object : MenuItem.OnActionExpandListener {
+            override fun onMenuItemActionExpand(item: MenuItem?): Boolean {
+                viewmodel.isSearching = true
+                return true
             }
-            .launchIn(lifecycleScope)
+
+            override fun onMenuItemActionCollapse(item: MenuItem?): Boolean {
+                viewmodel.isSearching = false
+
+                // Checks if it is already empty
+                if(!TextUtils.equals(viewmodel.searchQuery2.value, "")) {
+                    viewmodel.searchQuery2.value = ""
+                    binding.moviesRecycler.scrollToPosition(0)
+                }
+                return true
+            }
+        })
 
         super.onCreateOptionsMenu(menu, inflater)
     }
