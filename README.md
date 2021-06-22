@@ -5,7 +5,7 @@ Currently application can list top 10 movies or tv shows and provides search fun
 
 
 # Screenshots
-<img src="https://i.imgur.com/sAcqfIu.png" width="720">
+<img src="https://i.imgur.com/sAcqfIu.png" width="480">
 
 # Installation
 Application is available on play store:
