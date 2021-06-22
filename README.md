@@ -1,7 +1,8 @@
-# Movie_Time
+# Movie Time
 Simple application for viewing movies and tv shows.
 
-# Installation
-You can simply download app from play store directly.
+Currently application can list top 10 movies or tv shows and provides search functionality.
 
+# Installation
+Application is available on play store:
 [Play store link](https://play.google.com/store/apps/details?id=com.bojandolic.movietime)
