@@ -2,6 +2,7 @@
 Simple application for viewing movies and tv shows.
 
 Currently application can list top 10 movies or tv shows and provides search functionality.
+Application also supports dark theme.
 
 
 # Screenshots
