@@ -9,7 +9,9 @@ Currently application can list top 10 movies or tv shows and provides search fun
 <img src="https://i.imgur.com/sAcqfIu.png" width="320">
 
 <img src="https://i.imgur.com/xNW2u4S.png" width="320">
+</p>
 
+<p float="left">
 <img src="https://i.imgur.com/ml2hU81.png" width="320">
 
 <img src="https://i.imgur.com/7mxCWaQ.png" width="320">
